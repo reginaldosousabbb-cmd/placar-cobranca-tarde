@@ -79,6 +79,13 @@
     text-align:center;
   }
   .params input:focus{outline:2px solid var(--gold);}
+  .params input[readonly]{cursor:default;opacity:0.9;}
+  .params input[readonly]::-webkit-outer-spin-button,
+  .params input[readonly]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .params input[type=number][readonly]{-moz-appearance:textfield;}
   .params select{
     background:var(--panel-2);
     border:1px solid rgba(244,241,232,0.25);
@@ -266,6 +273,13 @@
     font-family:'Inter',sans-serif;
   }
   .valinput:focus{outline:2px solid var(--gold);}
+  .valinput[readonly]{cursor:default;}
+  .valinput[readonly]::-webkit-outer-spin-button,
+  .valinput[readonly]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  .valinput[type=number][readonly]{-moz-appearance:textfield;}
   .pct{
     font-family:'Bebas Neue',sans-serif;
     font-size:20px;
@@ -414,7 +428,7 @@
     <h1>CORRIDA DA META</h1>
     <div class="params">
       <label>📅 <input type="text" id="dataInput" value=""></label>
-      <label>🎯 Meta/pessoa R$ <input type="number" id="metaInput" value="1923" step="1"></label>
+      <label>🎯 Meta/pessoa R$ <input type="number" id="metaInput" value="1923" step="1" readonly></label>
       <label>🕐 Ver dia
         <select id="dateSelect">
           <option value="hoje">Hoje (ao vivo)</option>
@@ -499,7 +513,7 @@ nomes.forEach((nome, i) => {
       </div>
       <div class="stats">
         <span style="font-size:12px;color:var(--muted);">R$</span>
-        <input class="valinput" id="val-${i}" type="number" value="0" step="10">
+        <input class="valinput" id="val-${i}" type="number" value="0" step="10" readonly>
         <span class="pct" id="pct-${i}">0%</span>
       </div>
     </div>
