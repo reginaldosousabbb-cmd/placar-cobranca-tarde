@@ -219,12 +219,12 @@
     background:transparent;
     border:none;
     color:var(--cream);
-    border-bottom:1px dashed rgba(244,241,232,0.3);
     padding:2px 0;
     min-width:60px;
     max-width:130px;
+    cursor:default;
   }
-  .name:focus{outline:none;border-bottom:1px solid var(--gold);}
+  .name:focus{outline:none;}
   .streak-badge{
     font-size:10px;
     font-weight:800;
@@ -493,7 +493,7 @@ nomes.forEach((nome, i) => {
     <div class="lane-top">
       <div class="name-wrap">
         <span class="medal" id="medal-${i}"></span>
-        <input class="name" id="name-${i}" value="${nome}">
+        <input class="name" id="name-${i}" value="${nome}" readonly>
         <span class="neg-badge" id="negcount-${i}"></span>
         <span class="streak-badge" id="streak-${i}"></span>
       </div>
