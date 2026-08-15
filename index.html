@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corrida da Meta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#0B1F17;
+    --panel:#123326;
+    --panel-2:#0F2A1F;
+    --track:#1B4332;
+    --track-alt:#204a39;
+    --line:#F4F1E8;
+    --line-dim:rgba(244,241,232,0.35);
+    --gold:#F2B705;
+    --ember:#FF5D3A;
+    --mint:#6FCF97;
+    --sky:#4EA1D3;
+    --cream:#F4F1E8;
+    --muted:#9CB8AA;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family:'Inter',sans-serif;
+    color:var(--cream);
+    padding:24px 12px 60px;
+  }
+  .wrap{max-width:760px;margin:0 auto;position:relative;}
+  .header{
+    text-align:center;
+    padding:22px 16px 26px;
+    background:var(--panel);
+    background-image: repeating-linear-gradient(45deg, rgba(244,241,232,0.05) 0 10px, transparent 10px 20px);
+    border-radius:16px;
+    border:1px solid rgba(244,241,232,0.12);
+    margin-bottom:18px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-weight:800;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:56px;
+    letter-spacing:2px;
+    margin:0 0 10px;
+    color:var(--cream);
+    line-height:1;
+  }
+  .params{
+    display:flex;
+    justify-content:center;
+    gap:22px;
+    flex-wrap:wrap;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .params label{display:flex;align-items:center;gap:6px;}
+  .params input{
+    background:var(--panel-2);
+    border:1px solid rgba(244,241,232,0.25);
+    color:var(--cream);
+    border-radius:8px;
+    padding:6px 8px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+    width:96px;
+    text-align:center;
+  }
+  .params input:focus{outline:2px solid var(--gold);}
+  .params select{
+    background:var(--panel-2);
+    border:1px solid rgba(244,241,232,0.25);
+    color:var(--cream);
+    border-radius:8px;
+    padding:6px 8px;
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13px;
+  }
+  .params select:focus{outline:2px solid var(--gold);}
+  .hist-banner{
+    display:none;
+    margin-top:10px;
+    background:rgba(78,161,211,0.16);
+    border:1px solid rgba(78,161,211,0.4);
+    color:var(--sky);
+    font-size:12px;
+    font-weight:700;
+    padding:6px 12px;
+    border-radius:8px;
+    text-align:center;
+  }
+  .hist-banner.show{display:block;}
+  .sync-banner{
+    margin-top:12px;
+    font-size:11px;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block;}
+  .sync-dot.on{background:var(--mint);}
+  .sync-dot.off{background:var(--ember);}
+  .sync-btn{
+    background:transparent;
+    border:1px solid rgba(244,241,232,0.3);
+    color:var(--cream);
+    font-size:10px;
+    font-weight:700;
+    padding:3px 9px;
+    border-radius:12px;
+    cursor:pointer;
+  }
+  .valinput[readonly]{opacity:0.75;cursor:not-allowed;}
+
+  /* Thermometer */
+  .thermo-card{
+    background:var(--panel);
+    border:1px solid rgba(244,241,232,0.12);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:14px;
+  }
+  .thermo-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:8px;
+  }
+  .thermo-label{font-size:13px;font-weight:800;color:var(--cream);}
+  .thermo-values{font-size:12px;color:var(--muted);}
+  .thermo-values b{color:var(--gold);}
+  .thermo-track{
+    position:relative;
+    height:22px;
+    background:var(--panel-2);
+    border-radius:11px;
+    overflow:hidden;
+    border:1px solid rgba(244,241,232,0.15);
+  }
+  .thermo-fill{
+    position:absolute; left:0; top:0; bottom:0;
+    background:linear-gradient(90deg, var(--ember), var(--gold));
+    transition:width .5s ease;
+    border-radius:11px;
+  }
+  .thermo-fill.done{background:linear-gradient(90deg, var(--mint), var(--gold));}
+  .thermo-pct{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    font-size:11px; font-weight:800; color:var(--cream); text-shadow:0 1px 2px rgba(0,0,0,0.6);
+  }
+
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .metric{
+    background:var(--panel);
+    border:1px solid rgba(244,241,232,0.12);
+    border-radius:12px;
+    padding:14px 10px;
+    text-align:center;
+  }
+  .metric .num{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:30px;
+    color:var(--gold);
+    line-height:1;
+  }
+  .metric .lbl{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-top:4px;
+  }
+
+  #lanes{
+    display:flex;
+    flex-direction:column;
+  }
+  .lane{
+    background:var(--panel);
+    border:1px solid rgba(244,241,232,0.12);
+    border-radius:14px;
+    padding:12px 14px 14px;
+    margin-bottom:12px;
+    transition:order .3s ease;
+  }
+  .lane-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+    gap:10px;
+  }
+  .name-wrap{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap;}
+  .medal{font-size:18px;width:22px;text-align:center;flex-shrink:0;}
+  .name{
+    font-weight:800;
+    font-size:15px;
+    background:transparent;
+    border:none;
+    color:var(--cream);
+    border-bottom:1px dashed rgba(244,241,232,0.3);
+    padding:2px 0;
+    min-width:60px;
+    max-width:130px;
+  }
+  .name:focus{outline:none;border-bottom:1px solid var(--gold);}
+  .streak-badge{
+    font-size:10px;
+    font-weight:800;
+    color:var(--gold);
+    background:rgba(242,183,5,0.14);
+    border-radius:10px;
+    padding:2px 7px;
+    white-space:nowrap;
+    display:none;
+  }
+  .streak-badge.show{display:inline-block;}
+  .neg-badge{
+    font-size:10px;
+    font-weight:700;
+    color:var(--sky);
+    background:rgba(78,161,211,0.16);
+    border-radius:10px;
+    padding:2px 7px;
+    white-space:nowrap;
+    display:none;
+  }
+  .neg-badge.show{display:inline-block;}
+  .stats{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+  .valinput{
+    background:var(--panel-2);
+    border:1px solid rgba(244,241,232,0.25);
+    color:var(--cream);
+    border-radius:8px;
+    padding:5px 8px;
+    font-weight:800;
+    font-size:14px;
+    width:88px;
+    text-align:right;
+    font-family:'Inter',sans-serif;
+  }
+  .valinput:focus{outline:2px solid var(--gold);}
+  .pct{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:20px;
+    min-width:50px;
+    text-align:right;
+  }
+
+  .track{
+    position:relative;
+    height:34px;
+    background:
+      repeating-linear-gradient(90deg, var(--track) 0 38px, var(--track-alt) 38px 76px);
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid rgba(244,241,232,0.15);
+  }
+  .fill{
+    position:absolute;
+    left:0; top:0; bottom:0;
+    background:rgba(111,207,151,0.35);
+    transition:width .4s ease;
+  }
+  .fill.below{background:rgba(255,93,58,0.32);}
+  .fill.done{background:rgba(242,183,5,0.4);}
+  .runner{
+    position:absolute;
+    top:50%;
+    transform:translate(-50%,-50%);
+    font-size:20px;
+    transition:left .4s ease;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+  }
+  .finish{
+    position:absolute;
+    top:0; bottom:0;
+    width:0;
+    border-left:2px dashed var(--gold);
+  }
+  .finish::after{
+    content:"🏁";
+    position:absolute;
+    top:-4px;
+    left:-9px;
+    font-size:16px;
+  }
+
+  .status-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:8px;
+    font-size:12px;
+    color:var(--muted);
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-size:11px;
+    font-weight:800;
+    padding:3px 9px;
+    border-radius:20px;
+    letter-spacing:.3px;
+    white-space:nowrap;
+  }
+  .chip.done{background:rgba(242,183,5,0.18);color:var(--gold);}
+  .chip.close{background:rgba(111,207,151,0.18);color:var(--mint);}
+  .chip.behind{background:rgba(255,93,58,0.18);color:var(--ember);}
+  .chip.pace-ahead{background:rgba(78,161,211,0.18);color:var(--sky);}
+  .chip.pace-ontrack{background:rgba(242,183,5,0.18);color:var(--gold);}
+  .chip.pace-behind{background:rgba(255,93,58,0.18);color:var(--ember);}
+  .right-chips{display:flex;gap:6px;flex-wrap:wrap;}
+
+  /* History */
+  .history-card{
+    background:var(--panel);
+    border:1px solid rgba(244,241,232,0.12);
+    border-radius:14px;
+    padding:14px 16px;
+    margin-top:18px;
+  }
+  .history-title{font-size:13px;font-weight:800;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .history-title span.small{font-size:10px;font-weight:600;color:var(--muted);}
+  .history-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .history-table th, .history-table td{padding:5px 6px;text-align:center;border-bottom:1px solid rgba(244,241,232,0.08);}
+  .history-table th{color:var(--muted);font-weight:700;font-size:10px;text-transform:uppercase;}
+  .champion-line{
+    margin-top:10px;
+    text-align:center;
+    font-size:13px;
+    font-weight:800;
+    color:var(--gold);
+  }
+  .empty-hist{font-size:12px;color:var(--muted);text-align:center;padding:6px;}
+
+  .footer-actions{
+    text-align:center;
+    margin-top:22px;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .btn{
+    background:var(--gold);
+    color:#1B2E1F;
+    border:none;
+    font-family:'Inter',sans-serif;
+    font-weight:800;
+    font-size:13px;
+    padding:10px 20px;
+    border-radius:24px;
+    cursor:pointer;
+    letter-spacing:.3px;
+  }
+  .btn.secondary{
+    background:transparent;
+    color:var(--cream);
+    border:1px solid rgba(244,241,232,0.3);
+  }
+  .btn:hover{filter:brightness(1.08);}
+  .hint{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+  #confettiCanvas{
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    pointer-events:none;
+    z-index:999;
+  }
+  @media print{
+    body{padding:8px;}
+    .btn,.hint,.footer-actions{display:none;}
+  }
+</style>
+</head>
+<body>
+<canvas id="confettiCanvas"></canvas>
+<div class="wrap" id="captureArea">
+
+  <div class="header">
+    <div class="eyebrow">Placar diário · turno da tarde</div>
+    <h1>CORRIDA DA META</h1>
+    <div class="params">
+      <label>📅 <input type="text" id="dataInput" value=""></label>
+      <label>🎯 Meta/pessoa R$ <input type="number" id="metaInput" value="1923" step="1"></label>
+      <label>🕐 Ver dia
+        <select id="dateSelect">
+          <option value="hoje">Hoje (ao vivo)</option>
+        </select>
+      </label>
+    </div>
+    <div class="sync-banner">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncText">verificando sincronização…</span>
+      <button class="sync-btn" id="syncNowBtn">🔄 Atualizar agora</button>
+    </div>
+    <div class="hist-banner" id="histBanner">📅 Vendo o histórico de um dia anterior — os valores não são editáveis aqui.</div>
+  </div>
+
+  <div class="thermo-card">
+    <div class="thermo-top">
+      <span class="thermo-label">🌡️ Termômetro da Equipe</span>
+      <span class="thermo-values" id="thermoValues"><b>R$ 0</b> de R$ 13.461</span>
+    </div>
+    <div class="thermo-track">
+      <div class="thermo-fill" id="thermoFill" style="width:0%;"></div>
+      <span class="thermo-pct" id="thermoPct">0%</span>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="metric"><div class="num" id="sumBatidos">0/7</div><div class="lbl">bateram a meta</div></div>
+    <div class="metric"><div class="num" id="sumTotal">R$ 0</div><div class="lbl">negociado pela equipe</div></div>
+    <div class="metric"><div class="num" id="sumPct">0%</div><div class="lbl">da meta da equipe</div></div>
+  </div>
+
+  <div id="lanes"></div>
+
+  <div class="history-card">
+    <div class="history-title">📅 Histórico da semana <span class="small" id="histNote">salvo neste navegador</span></div>
+    <div id="historyBody"><div class="empty-hist">Nenhum dia salvo ainda. Clique em "💾 Salvar resultado de hoje" ao final do turno.</div></div>
+    <div class="champion-line" id="championLine"></div>
+  </div>
+
+  <div class="footer-actions">
+    <button class="btn" id="saveDayBtn">💾 Salvar resultado de hoje</button>
+    <button class="btn secondary" id="downloadImgBtn">📷 Baixar como imagem</button>
+    <button class="btn secondary" onclick="window.print()">🖨️ Imprimir</button>
+  </div>
+  <div class="hint">O placar atualiza sozinho a partir da planilha a cada 20s. Clique em "🔄 Atualizar agora" pra forçar uma leitura na hora. Sem login: use só dentro do time.</div>
+
+</div>
+
+<script>
+const nomes = ["Alexandre","Kalissa","Maria","Nayara","Yara","Ivoneide","Joao Pedro"];
+
+// ---- CONFIGURAÇÃO DO ADMIN (só quem edita este arquivo mexe aqui) ----
+// Cole aqui o link CSV publicado da aba "Resumo por Operador" do Painel Central.
+// Os colaboradores NÃO veem nem conseguem editar este link — só o botão "Atualizar agora".
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaQGrQ3oCX3AXj0LiHcfMbKSBANM8BD2bpoICo5jbPmJZlKdI9y9_wzLmWHzDhyxCAgR88WxcnBrbb/pub?gid=1612982622&single=true&output=csv";
+// Cole aqui o link CSV publicado da aba "Histórico Consolidado" do Painel Central.
+// Publique especificamente essa aba (Arquivo > Compartilhar > Publicar na Web > CSV).
+// Deixe como "" (vazio) que o seletor "Ver dia" fica com só a opção "Hoje", sem dar erro.
+const CSV_URL_HIST = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRaQGrQ3oCX3AXj0LiHcfMbKSBANM8BD2bpoICo5jbPmJZlKdI9y9_wzLmWHzDhyxCAgR88WxcnBrbb/pub?gid=552872114&single=true&output=csv";
+// -----------------------------------------------------------------------
+
+const lanesEl = document.getElementById('lanes');
+const metaInput = document.getElementById('metaInput');
+const dataInput = document.getElementById('dataInput');
+const prevDone = {}; // controla disparo único de confete por colaborador
+let teamCelebrated = false;
+
+const hoje = new Date();
+dataInput.value = hoje.toLocaleDateString('pt-BR');
+
+nomes.forEach((nome, i) => {
+  const lane = document.createElement('div');
+  lane.className = 'lane';
+  lane.id = 'lane-' + i;
+  lane.innerHTML = `
+    <div class="lane-top">
+      <div class="name-wrap">
+        <span class="medal" id="medal-${i}"></span>
+        <input class="name" id="name-${i}" value="${nome}">
+        <span class="neg-badge" id="negcount-${i}"></span>
+        <span class="streak-badge" id="streak-${i}"></span>
+      </div>
+      <div class="stats">
+        <span style="font-size:12px;color:var(--muted);">R$</span>
+        <input class="valinput" id="val-${i}" type="number" value="0" step="10">
+        <span class="pct" id="pct-${i}">0%</span>
+      </div>
+    </div>
+    <div class="track">
+      <div class="fill" id="fill-${i}"></div>
+      <div class="finish" style="left:76.9%;"></div>
+      <span class="runner" id="runner-${i}" style="left:0%;">🏃</span>
+    </div>
+    <div class="status-row">
+      <span id="falta-${i}"></span>
+      <div class="right-chips">
+        <span class="chip pace-behind" id="pace-${i}"></span>
+        <span class="chip behind" id="chip-${i}">⚠ abaixo</span>
+      </div>
+    </div>
+  `;
+  lanesEl.appendChild(lane);
+  prevDone[i] = false;
+});
+
+function fmt(n){
+  return 'R$ ' + n.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+// ---------- Ritmo em tempo real (turno 14h-20h) ----------
+function shiftFraction(){
+  const now = new Date();
+  const start = new Date(now); start.setHours(14,0,0,0);
+  const end = new Date(now); end.setHours(20,0,0,0);
+  if (now <= start) return 0;
+  if (now >= end) return 1;
+  return (now - start) / (end - start);
+}
+
+// ---------- Confete (vanilla canvas, sem dependência externa) ----------
+const confettiCanvas = document.getElementById('confettiCanvas');
+const ctx = confettiCanvas.getContext('2d');
+let confettiParticles = [];
+let confettiRunning = false;
+function resizeCanvas(){
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function launchConfetti(count){
+  const colors = ['#F2B705','#6FCF97','#FF5D3A','#4EA1D3','#F4F1E8'];
+  for(let k=0;k<count;k++){
+    confettiParticles.push({
+      x: Math.random()*confettiCanvas.width,
+      y: -20 - Math.random()*100,
+      vx: (Math.random()-0.5)*3,
+      vy: 2 + Math.random()*3,
+      size: 5 + Math.random()*5,
+      color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*360,
+      vrot: (Math.random()-0.5)*10,
+      life: 0
+    });
+  }
+  if(!confettiRunning){
+    confettiRunning = true;
+    requestAnimationFrame(animateConfetti);
+  }
+}
+function animateConfetti(){
+  ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  confettiParticles.forEach(p=>{
+    p.x += p.vx; p.y += p.vy; p.rot += p.vrot; p.life++;
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.rotate(p.rot*Math.PI/180);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = Math.max(0, 1 - p.life/140);
+    ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+    ctx.restore();
+  });
+  confettiParticles = confettiParticles.filter(p => p.life < 140 && p.y < confettiCanvas.height + 30);
+  if(confettiParticles.length > 0){
+    requestAnimationFrame(animateConfetti);
+  } else {
+    confettiRunning = false;
+    ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  }
+}
+
+// ---------- Armazenamento COMPARTILHADO (todos que abrem este link veem/editam os mesmos dados) ----------
+const storageAvailable = (typeof window !== 'undefined') && !!window.storage;
+let memoryHistory = [];
+const syncDot = document.getElementById('syncDot');
+const syncText = document.getElementById('syncText');
+
+function setSyncStatus(ok, msg){
+  syncDot.className = 'sync-dot ' + (ok ? 'on' : 'off');
+  syncText.textContent = msg;
+}
+
+if (storageAvailable){
+  setSyncStatus(true, 'compartilhado — todo mundo que abrir este link vê e edita os mesmos dados');
+} else {
+  setSyncStatus(false, 'sem sincronização (abra este link dentro do Claude para compartilhar com o time)');
+}
+document.getElementById('histNote').textContent = storageAvailable
+  ? 'compartilhado entre o time'
+  : 'salvo só nesta sessão';
+
+function getIsoDate(){
+  const [dd, mm, yyyy] = dataInput.value.split('/');
+  return (yyyy && mm && dd) ? `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}` : new Date().toISOString().slice(0,10);
+}
+
+// -- valores do dia (por colaborador), nomes e meta: tudo compartilhado --
+async function pushValue(i, val){
+  if (!storageAvailable) return;
+  try{ await window.storage.set(`val:${getIsoDate()}:${i}`, String(val), true); }catch(e){}
+}
+async function pushName(i, name){
+  if (!storageAvailable) return;
+  try{ await window.storage.set(`name:${i}`, name, true); }catch(e){}
+}
+async function pushMeta(val){
+  if (!storageAvailable) return;
+  try{ await window.storage.set('meta:value', String(val), true); }catch(e){}
+}
+
+async function pullSharedState(){
+  if (!storageAvailable) return null;
+  const isoDate = getIsoDate();
+  const values = [], names = [];
+  try{
+    for (let i=0;i<nomes.length;i++){
+      try{
+        const r = await window.storage.get(`val:${isoDate}:${i}`, true);
+        values[i] = r ? (parseFloat(r.value)||0) : null;
+      }catch(e){ values[i] = null; }
+    }
+    for (let i=0;i<nomes.length;i++){
+      try{
+        const r = await window.storage.get(`name:${i}`, true);
+        names[i] = r ? r.value : null;
+      }catch(e){ names[i] = null; }
+    }
+    let meta = null;
+    try{
+      const r = await window.storage.get('meta:value', true);
+      meta = r ? (parseFloat(r.value)||null) : null;
+    }catch(e){}
+    return {values, names, meta};
+  }catch(e){
+    return null;
+  }
+}
+
+function applySharedState(state){
+  if (!state) return;
+  if (!autoSourceUrl){
+    state.values.forEach((v, i) => {
+      if (v !== null){
+        const el = document.getElementById('val-'+i);
+        if (document.activeElement !== el) el.value = v;
+      }
+    });
+  }
+  state.names.forEach((n, i) => {
+    if (n){
+      const el = document.getElementById('name-'+i);
+      if (document.activeElement !== el) el.value = n;
+    }
+  });
+  if (state.meta !== null && document.activeElement !== metaInput){
+    metaInput.value = state.meta;
+  }
+  recalc();
+}
+
+// ---------- Fonte automática: lê direto do Google Sheets publicado (CSV), sem digitação dupla ----------
+// O link fica só no código (CSV_URL acima) — os colaboradores não veem caixa nem botão pra mexer nisso.
+let autoSourceUrl = null;
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuotes){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; } else { inQuotes = false; }
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ','){ row.push(field); field = ''; }
+      else if (c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r'){ /* ignora */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function setValuesReadOnly(readOnly){
+  nomes.forEach((_, i) => {
+    document.getElementById('val-'+i).readOnly = readOnly;
+  });
+}
+
+// Converte número no formato brasileiro ("1.545,00") para float (1545.00)
+function parseBRNumber(raw){
+  if (!raw) return 0;
+  const cleaned = String(raw).trim().replace(/\./g, '').replace(',', '.');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+async function fetchFromSheet(url){
+  const bust = url.includes('?') ? '&' : '?';
+  const res = await fetch(url + bust + '_t=' + Date.now());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  const rows = parseCSV(text);
+  const headerIdx = rows.findIndex(r => r.some(c => c.trim() === 'Colaborador'));
+  if (headerIdx === -1) throw new Error('Não achei a coluna "Colaborador" no CSV. Confirme se publicou a aba "Resumo por Operador".');
+  const header = rows[headerIdx];
+  const nameIdx = header.findIndex(c => c.trim() === 'Colaborador');
+  const valIdx = header.findIndex(c => c.toLowerCase().includes('negociado'));
+  if (valIdx === -1) throw new Error('Não achei a coluna "Total Negociado" no CSV.');
+  const negIdx = header.findIndex(c => c.toLowerCase().includes('qtde') && c.toLowerCase().includes('negocia'));
+
+  // Mapeia por NOME (não por posição), pra não misturar colaboradores se a ordem do CSV mudar
+  const dataByName = {};
+  for (let r = headerIdx + 1; r < rows.length; r++){
+    const row = rows[r];
+    if (!row || !row[nameIdx]) continue;
+    const name = row[nameIdx].trim();
+    if (!name) continue;
+    const val = parseBRNumber(row[valIdx]);
+    let neg = 0;
+    if (negIdx !== -1){
+      neg = parseInt(String(row[negIdx] || '0').replace(/[^0-9-]/g, ''), 10) || 0;
+    }
+    dataByName[name] = { val, neg };
+  }
+
+  const values = [], negs = [];
+  nomes.forEach(n => {
+    const d = dataByName[n];
+    values.push(d ? d.val : 0);
+    negs.push(d ? d.neg : 0);
+  });
+  return { values, negs };
+}
+
+let syncRequestCounter = 0;
+async function syncFromSheet(){
+  if (!autoSourceUrl || viewingHistory) return;
+  const requestId = ++syncRequestCounter; // marca esta busca com um número único
+  try{
+    const { values, negs } = await fetchFromSheet(autoSourceUrl);
+    if (requestId !== syncRequestCounter){
+      return; // já existe uma busca mais recente em andamento — descarta este resultado desatualizado
+    }
+    values.forEach((v, i) => {
+      document.getElementById('val-'+i).value = v;
+    });
+    negs.forEach((n, i) => {
+      const el = document.getElementById('negcount-'+i);
+      if (el){
+        if (n > 0){
+          el.textContent = n + (n === 1 ? ' negociação' : ' negociações');
+          el.classList.add('show');
+        } else {
+          el.classList.remove('show');
+        }
+      }
+    });
+    recalc();
+    setSyncStatus(true, 'atualizado — última leitura: ' + new Date().toLocaleTimeString('pt-BR').slice(0,5));
+  }catch(e){
+    if (requestId !== syncRequestCounter) return;
+    setSyncStatus(false, 'não consegui ler a planilha (' + e.message + ')');
+  }
+}
+
+async function activateAutoSource(url){
+  autoSourceUrl = url;
+  setValuesReadOnly(true);
+  setSyncStatus(true, 'conectando com a planilha…');
+  await syncFromSheet();
+}
+
+// ---------- Histórico de dias anteriores ----------
+const dateSelect = document.getElementById('dateSelect');
+const histBanner = document.getElementById('histBanner');
+let histRowsCache = null; // [{data, colaborador, negociado, recebido, meta, pctBatida}]
+let liveInterval = null;
+let viewingHistory = false;
+
+async function fetchHistCSV(){
+  if (!CSV_URL_HIST || !CSV_URL_HIST.startsWith('http')) return [];
+  const bust = CSV_URL_HIST.includes('?') ? '&' : '?';
+  const res = await fetch(CSV_URL_HIST + bust + '_t=' + Date.now());
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  const rows = parseCSV(text);
+  const headerIdx = rows.findIndex(r => r.some(c => c.trim() === 'Data'));
+  if (headerIdx === -1) return [];
+  const header = rows[headerIdx];
+  const dataIdx = header.findIndex(c => c.trim() === 'Data');
+  const colabIdx = header.findIndex(c => c.trim() === 'Colaborador');
+  const negIdx = header.findIndex(c => c.toLowerCase().includes('negociado'));
+  const out = [];
+  for (let r = headerIdx + 1; r < rows.length; r++){
+    const row = rows[r];
+    if (!row || !row[dataIdx] || !row[colabIdx]) continue;
+    out.push({
+      data: row[dataIdx].trim(),
+      colaborador: row[colabIdx].trim(),
+      negociado: parseBRNumber(row[negIdx])
+    });
+  }
+  return out;
+}
+
+async function populateDateSelect(){
+  try{
+    histRowsCache = await fetchHistCSV();
+  }catch(e){
+    histRowsCache = [];
+  }
+  if (!histRowsCache || histRowsCache.length === 0) return;
+  // datas únicas, na ordem em que aparecem, mais recentes por último — invertemos pra mostrar mais recente primeiro
+  const seen = new Set();
+  const datas = [];
+  histRowsCache.forEach(r => {
+    if (!seen.has(r.data)){ seen.add(r.data); datas.push(r.data); }
+  });
+  datas.reverse();
+  datas.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    dateSelect.appendChild(opt);
+  });
+}
+
+function showHistoricalDay(dataLabel){
+  viewingHistory = true;
+  histBanner.classList.add('show');
+  histBanner.textContent = '📅 Vendo o dia ' + dataLabel + ' (histórico) — os valores não são editáveis aqui.';
+  setValuesReadOnly(true);
+  const rowsForDay = (histRowsCache || []).filter(r => r.data === dataLabel);
+  const byName = {};
+  rowsForDay.forEach(r => { byName[r.colaborador] = r.negociado; });
+  nomes.forEach((n, i) => {
+    document.getElementById('val-'+i).value = byName[n] || 0;
+    const el = document.getElementById('negcount-'+i);
+    if (el) el.classList.remove('show');
+  });
+  recalc();
+  setSyncStatus(true, 'histórico — dia ' + dataLabel);
+}
+
+function backToLive(){
+  viewingHistory = false;
+  histBanner.classList.remove('show');
+  if (autoSourceUrl){
+    setValuesReadOnly(true);
+    syncFromSheet();
+  } else {
+    setValuesReadOnly(false);
+  }
+}
+
+dateSelect.addEventListener('change', () => {
+  if (dateSelect.value === 'hoje'){
+    backToLive();
+  } else {
+    showHistoricalDay(dateSelect.value);
+  }
+});
+
+const saveTimers = {};
+function debouncedPushValue(i, val){
+  clearTimeout(saveTimers['val'+i]);
+  saveTimers['val'+i] = setTimeout(() => pushValue(i, val), 500);
+}
+function debouncedPushName(i, name){
+  clearTimeout(saveTimers['name'+i]);
+  saveTimers['name'+i] = setTimeout(() => pushName(i, name), 500);
+}
+function debouncedPushMeta(val){
+  clearTimeout(saveTimers['meta']);
+  saveTimers['meta'] = setTimeout(() => pushMeta(val), 500);
+}
+
+async function saveDayRecord(record){
+  if (storageAvailable){
+    try{
+      await window.storage.set('day:' + record.date, JSON.stringify(record), true);
+      return;
+    }catch(e){ /* cai no fallback abaixo */ }
+  }
+  memoryHistory = memoryHistory.filter(r => r.date !== record.date);
+  memoryHistory.push(record);
+}
+
+async function loadHistory(){
+  if (storageAvailable){
+    try{
+      const list = await window.storage.list('day:', true);
+      const items = [];
+      if (list && list.keys){
+        for (const k of list.keys){
+          try{
+            const r = await window.storage.get(k, true);
+            if (r) items.push(JSON.parse(r.value));
+          }catch(e){}
+        }
+      }
+      return items.sort((a,b)=> a.date.localeCompare(b.date));
+    }catch(e){
+      return memoryHistory.slice().sort((a,b)=> a.date.localeCompare(b.date));
+    }
+  }
+  return memoryHistory.slice().sort((a,b)=> a.date.localeCompare(b.date));
+}
+
+function computeStreaksAndChampion(history, meta){
+  // history: [{date, values:[7 numeros]}], ordenado do mais antigo pro mais novo
+  const streaks = nomes.map(()=>0);
+  const totals7 = nomes.map(()=>0);
+  nomes.forEach((_, i) => {
+    let s = 0;
+    for (let d = history.length - 1; d >= 0; d--){
+      if (history[d].values[i] >= meta) s++; else break;
+    }
+    streaks[i] = s;
+    const last7 = history.slice(-7);
+    totals7[i] = last7.reduce((acc, day) => acc + (day.values[i]||0), 0);
+  });
+  let champIdx = -1, champVal = -1;
+  totals7.forEach((v, i) => { if (v > champVal){ champVal = v; champIdx = i; } });
+  return {streaks, totals7, champIdx, champVal};
+}
+
+async function renderHistory(){
+  const meta = parseFloat(metaInput.value) || 1923;
+  const history = await loadHistory();
+  const body = document.getElementById('historyBody');
+  const champLine = document.getElementById('championLine');
+
+  if (history.length === 0){
+    body.innerHTML = '<div class="empty-hist">Nenhum dia salvo ainda. Clique em "💾 Salvar resultado de hoje" ao final do turno.</div>';
+    champLine.textContent = '';
+  } else {
+    const last7 = history.slice(-7);
+    let html = '<table class="history-table"><tr><th>Data</th>' + nomes.map(n=>`<th>${n.split(' ')[0]}</th>`).join('') + '</tr>';
+    last7.forEach(day => {
+      html += '<tr><td>' + day.date.split('-').reverse().join('/') + '</td>' +
+        day.values.map(v => `<td>${(v||0).toLocaleString('pt-BR')}</td>`).join('') + '</tr>';
+    });
+    html += '</table>';
+    body.innerHTML = html;
+
+    const {champIdx, champVal} = computeStreaksAndChampion(history, meta);
+    champLine.textContent = champIdx >= 0
+      ? `🏆 Campeã(ão) da semana: ${nomes[champIdx]} (${fmt(champVal)} nos últimos ${last7.length} dias)`
+      : '';
+  }
+
+  const {streaks} = computeStreaksAndChampion(history, meta);
+  streaks.forEach((s, i) => {
+    const badge = document.getElementById('streak-'+i);
+    if (s >= 2){
+      badge.textContent = '🔥 ' + s + ' dias';
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+  });
+}
+
+document.getElementById('saveDayBtn').addEventListener('click', async () => {
+  const values = nomes.map((_, i) => parseFloat(document.getElementById('val-'+i).value) || 0);
+  const isoDate = getIsoDate();
+  await saveDayRecord({date: isoDate, values});
+  await renderHistory();
+  launchConfetti(60);
+});
+
+document.getElementById('downloadImgBtn').addEventListener('click', () => {
+  if (typeof html2canvas === 'undefined'){
+    alert('Não foi possível carregar o gerador de imagem (sem internet no momento). Use o botão Imprimir ou tire um print da tela.');
+    return;
+  }
+  const area = document.getElementById('captureArea');
+  html2canvas(area, {backgroundColor: '#0B1F17', scale: 2}).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'placar-corrida-da-meta.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(() => {
+    alert('Não foi possível gerar a imagem. Use o botão Imprimir ou tire um print da tela.');
+  });
+});
+
+function recalc(){
+  const meta = parseFloat(metaInput.value) || 1923;
+  let batidos = 0;
+  let totalRecebido = 0;
+  const frac = shiftFraction();
+  const expectedNow = meta * frac;
+
+  const ranked = nomes.map((_, i) => {
+    const val = parseFloat(document.getElementById('val-'+i).value) || 0;
+    return {i, val};
+  }).sort((a,b) => b.val - a.val);
+
+  const posOf = {};
+  ranked.forEach((r, idx) => { posOf[r.i] = idx + 1; });
+
+  nomes.forEach((_, i) => {
+    const val = parseFloat(document.getElementById('val-'+i).value) || 0;
+    const pct = meta > 0 ? val / meta : 0;
+    totalRecebido += val;
+    if (pct >= 1) batidos++;
+
+    const scale = 1.3;
+    const leftPct = Math.min(pct, scale) / scale * 100;
+
+    const runner = document.getElementById('runner-'+i);
+    runner.style.left = leftPct + '%';
+
+    const fill = document.getElementById('fill-'+i);
+    fill.style.width = leftPct + '%';
+    fill.className = 'fill' + (pct >= 1 ? ' done' : (pct < 0.8 ? ' below' : ''));
+
+    document.getElementById('pct-'+i).textContent = Math.round(pct*100) + '%';
+    document.getElementById('pct-'+i).style.color = pct >= 1 ? 'var(--gold)' : (pct < 0.8 ? 'var(--ember)' : 'var(--mint)');
+
+    const falta = document.getElementById('falta-'+i);
+    const chip = document.getElementById('chip-'+i);
+    if (pct >= 1){
+      falta.textContent = 'Meta batida! 🎉';
+      chip.className = 'chip done';
+      chip.textContent = '🏆 na meta';
+    } else if (pct >= 0.8){
+      falta.textContent = 'Faltam ' + fmt(meta - val);
+      chip.className = 'chip close';
+      chip.textContent = '🔥 quase lá';
+    } else {
+      falta.textContent = 'Faltam ' + fmt(meta - val);
+      chip.className = 'chip behind';
+      chip.textContent = '⚠ abaixo do ritmo';
+    }
+
+    // Ritmo em tempo real
+    const paceEl = document.getElementById('pace-'+i);
+    if (frac <= 0 || frac >= 1){
+      paceEl.style.display = 'none';
+    } else {
+      paceEl.style.display = 'inline-block';
+      if (val >= expectedNow){
+        paceEl.className = 'chip pace-ahead';
+        paceEl.textContent = '🔵 adiantado';
+      } else if (val >= expectedNow * 0.9){
+        paceEl.className = 'chip pace-ontrack';
+        paceEl.textContent = '🟡 no ritmo';
+      } else {
+        paceEl.className = 'chip pace-behind';
+        paceEl.textContent = '🔴 atrasado';
+      }
+    }
+
+    const medal = document.getElementById('medal-'+i);
+    const pos = posOf[i];
+    medal.textContent = val > 0 ? (pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : '') : '';
+
+    // Reordena a raia na tela pra refletir quem está na frente de verdade
+    const laneEl = document.getElementById('lane-'+i);
+    if (laneEl) laneEl.style.order = pos;
+
+    // Confete ao bater a meta (dispara uma vez por virada de estado)
+    if (pct >= 1 && !prevDone[i]){
+      launchConfetti(45);
+    }
+    prevDone[i] = pct >= 1;
+  });
+
+  document.getElementById('sumBatidos').textContent = batidos + '/' + nomes.length;
+  document.getElementById('sumTotal').textContent = fmt(totalRecebido);
+  const teamGoal = meta * nomes.length;
+  const teamPct = teamGoal > 0 ? totalRecebido / teamGoal : 0;
+  document.getElementById('sumPct').textContent = Math.round(teamPct*100) + '%';
+
+  // Termômetro da equipe
+  document.getElementById('thermoValues').innerHTML = `<b>${fmt(totalRecebido)}</b> de ${fmt(teamGoal)}`;
+  const thermoFill = document.getElementById('thermoFill');
+  thermoFill.style.width = Math.min(100, teamPct*100) + '%';
+  thermoFill.className = 'thermo-fill' + (teamPct >= 1 ? ' done' : '');
+  document.getElementById('thermoPct').textContent = Math.round(teamPct*100) + '%';
+
+  if (teamPct >= 1 && !teamCelebrated){
+    launchConfetti(150);
+    teamCelebrated = true;
+  } else if (teamPct < 1){
+    teamCelebrated = false;
+  }
+}
+
+document.addEventListener('input', (e) => {
+  const id = e.target.id;
+  if (id.startsWith('val-')){
+    recalc();
+    const i = parseInt(id.split('-')[1], 10);
+    debouncedPushValue(i, parseFloat(e.target.value) || 0);
+  } else if (id === 'metaInput'){
+    recalc();
+    debouncedPushMeta(parseFloat(e.target.value) || 1923);
+  } else if (id.startsWith('name-')){
+    const i = parseInt(id.split('-')[1], 10);
+    debouncedPushName(i, e.target.value);
+  }
+});
+
+document.getElementById('dataInput').addEventListener('change', async () => {
+  setSyncStatus(storageAvailable, storageAvailable ? 'buscando dados do dia…' : 'sem sincronização');
+  const state = await pullSharedState();
+  applySharedState(state);
+  await renderHistory();
+  if (storageAvailable) setSyncStatus(true, 'compartilhado — atualizado agora');
+});
+
+document.getElementById('syncNowBtn').addEventListener('click', async () => {
+  setSyncStatus(storageAvailable, 'buscando atualizações…');
+  const state = await pullSharedState();
+  applySharedState(state);
+  await renderHistory();
+  if (autoSourceUrl) await syncFromSheet();
+  if (storageAvailable) setSyncStatus(true, 'compartilhado — atualizado agora');
+});
+
+async function initialSync(){
+  if (CSV_URL && CSV_URL.startsWith('http')){
+    await activateAutoSource(CSV_URL);
+  }
+  await populateDateSelect();
+  const state = await pullSharedState();
+  applySharedState(state);
+  await renderHistory();
+}
+
+recalc();
+renderHistory();
+initialSync();
+setInterval(recalc, 60000); // atualiza o ritmo a cada minuto mesmo sem digitar
+setInterval(async () => {
+  if (viewingHistory) return; // não sobrescreve a tela enquanto está vendo um dia anterior
+  const state = await pullSharedState();
+  applySharedState(state);
+  await renderHistory();
+  if (autoSourceUrl) await syncFromSheet();
+  if (storageAvailable) setSyncStatus(true, 'compartilhado — última atualização: ' + new Date().toLocaleTimeString('pt-BR').slice(0,5));
+}, 20000); // busca o que os outros digitaram a cada 20s
+</script>
+</body>
+</html>
